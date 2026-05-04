@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HolyDélice">
+<meta name="theme-color" content="#1a1a1a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>HolyDélice — HACCP</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#2d6a4f;--green-bg:#d8f3dc;--green-mid:#52b788;--green-light:#b7e4c7;
+  --red:#c1121f;--red-bg:#fff0f0;--red-light:#ffb3b3;
+  --amber:#b5621c;--amber-bg:#fff3e0;--amber-light:#ffd599;
+  --bg:#f7f7f5;--card:#ffffff;--border:#e8e8e4;--border2:#d0d0c8;
+  --text:#1a1a1a;--text2:#6b6b6b;--text3:#9b9b9b;
+  --r:14px;--r-sm:10px;--r-xs:7px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto;font-size:15px}
+
+/* ── PIN ── */
+#pin-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px}
+.pin-brand{font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;margin-bottom:10px}
+.pin-logo{font-size:32px;font-weight:700;color:var(--text);margin-bottom:6px}
+.pin-logo span{color:var(--green)}
+.pin-tag{font-size:13px;color:var(--text3);margin-bottom:44px}
+.pin-dots{display:flex;gap:14px;margin-bottom:36px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--border2);background:transparent;transition:all .2s}
+.pin-dot.filled{background:var(--green);border-color:var(--green)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:260px}
+.pin-key{padding:17px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--card);font-size:20px;font-weight:500;text-align:center;cursor:pointer;color:var(--text)}
+.pin-key:active{background:var(--bg);transform:scale(.96)}
+.pin-error{color:var(--red);font-size:12px;margin-top:14px;min-height:18px;text-align:center}
+.pin-hint{margin-top:22px;font-size:12px;color:var(--text3)}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--card);padding:16px 18px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.logo{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.logo span{color:var(--green)}
+.logo-sub{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
+.lock-btn{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:5px 11px;cursor:pointer;font-family:inherit}
+.status-pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:10px;font-weight:600;padding:4px 9px;border-radius:20px;letter-spacing:.02em}
+.pill-green{background:var(--green-bg);color:var(--green)}
+.pill-amber{background:var(--amber-bg);color:var(--amber)}
+.pill-red{background:var(--red-bg);color:var(--red)}
+
+/* ── LAYOUT ── */
+.content{padding:14px;padding-bottom:84px}
+.view{display:none}.view.active{display:block}
+.page-title{font-size:20px;font-weight:700;margin-bottom:16px;letter-spacing:-.3px}
+.section-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin:14px 0 8px}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px}
+
+/* ── DDPP BTN ── */
+.ddpp-btn{width:100%;padding:16px;background:var(--text);border:none;border-radius:var(--r);color:white;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:-.1px;font-family:inherit}
+.ddpp-btn:active{opacity:.85}
+
+/* ── PANELS ── */
+.panel{display:none;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px}
+.panel.open{display:block}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.panel-title{font-size:14px;font-weight:600;letter-spacing:-.2px}
+
+/* ── SECTION BTN ── */
+.sec-btn{width:100%;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:13px;text-align:left;color:var(--text);font-family:inherit}
+.sec-btn:active{background:var(--bg)}
+.sec-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.sec-meta{flex:1}
+.sec-name{font-size:14px;font-weight:600;letter-spacing:-.2px}
+.sec-sub{font-size:11px;color:var(--text3);margin-top:2px;font-weight:400}
+.sec-right{display:flex;align-items:center;gap:8px}
+.status-dot{width:8px;height:8px;border-radius:50%}
+.dot-green{background:var(--green)}.dot-amber{background:var(--amber)}.dot-red{background:var(--red)}
+.chevron{color:var(--text3);font-size:14px;font-weight:300}
+
+/* ── FRIGO CARDS ── */
+.frigo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.frigo-card{background:var(--bg);border-radius:var(--r-sm);padding:12px}
+.frigo-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.frigo-val{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.frigo-status{font-size:11px;font-weight:600;margin-top:3px}
+.c-green{color:var(--green)}.c-red{color:var(--red)}.c-amber{color:var(--amber)}
+
+/* ── INPUTS ── */
+.input-row{display:flex;gap:8px;margin-bottom:10px}
+.inp{flex:1;padding:11px 13px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:14px;background:var(--bg);color:var(--text);font-family:inherit;-webkit-appearance:none;appearance:none}
+.inp:focus{outline:none;border-color:var(--green)}
+.inp-full{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:14px;background:var(--bg);color:var(--text);font-family:inherit;margin-bottom:8px;-webkit-appearance:none;appearance:none}
+.inp-full:focus{outline:none;border-color:var(--green)}
+select.inp-full,select.inp{-webkit-appearance:none}
+.btn-green{width:100%;padding:12px;background:var(--green);border:none;border-radius:var(--r-sm);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:-.1px}
+.btn-green:active{opacity:.85}
+.btn-sm{padding:8px 14px;background:var(--green);border:none;border-radius:var(--r-xs);color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* ── CHART BARS ── */
+.bars-wrap{margin-top:10px}
+.bars{display:flex;align-items:flex-end;gap:4px;height:56px}
+.bar{flex:1;border-radius:4px 4px 0 0;min-height:4px}
+.bar-green{background:var(--green-light)}.bar-red{background:var(--red-light)}
+.bar-days{display:flex;gap:4px;margin-top:4px}
+.bar-day{flex:1;font-size:10px;color:var(--text3);text-align:center;font-weight:500}
+
+/* ── DROP ZONE ── */
+.drop-zone{border:1.5px dashed var(--border2);border-radius:var(--r-sm);padding:18px 14px;text-align:center;cursor:pointer;margin-bottom:10px;background:var(--bg)}
+.drop-zone:active{border-color:var(--green);background:var(--green-bg)}
+.drop-icon{font-size:26px;margin-bottom:6px}
+.drop-text{font-size:12px;color:var(--text2);font-weight:500}
+.drop-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.fi-hidden{display:none}
+
+/* ── DOC LIST ── */
+.doc-list{display:flex;flex-direction:column;gap:6px}
+.doc-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border)}
+.doc-thumb{width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
+.doc-thumb-pdf{width:42px;height:42px;border-radius:8px;background:var(--red-bg);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.doc-thumb-file{width:42px;height:42px;border-radius:8px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.doc-info{flex:1;min-width:0}
+.doc-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.doc-meta{font-size:10px;color:var(--text3);margin-top:2px;font-weight:500}
+.doc-actions{display:flex;gap:5px;flex-shrink:0}
+.btn-view{font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text2);cursor:pointer;font-family:inherit;font-weight:500}
+.btn-del{font-size:11px;padding:5px 9px;border:1px solid var(--red-light);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;font-family:inherit;font-weight:500}
+.doc-empty{text-align:center;padding:16px;color:var(--text3);font-size:12px;font-weight:500}
+
+/* ── PRE-FILLED ROWS ── */
+.data-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
+.data-row:last-child{border-bottom:none}
+.data-name{font-size:13px;font-weight:600;color:var(--text)}
+.data-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.badge{font-size:10px;font-weight:700;padding:4px 9px;border-radius:20px;letter-spacing:.02em;white-space:nowrap}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+
+/* ── ALERT BANNER ── */
+.alert-banner{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--amber-bg);border-radius:var(--r-sm);border:1px solid var(--amber-light);margin-bottom:10px}
+.alert-text{font-size:12px;color:var(--amber);font-weight:600}
+
+/* ── CHECKLIST ── */
+.check-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;background:var(--bg);margin-bottom:6px;transition:all .15s}
+.check-item.done{background:var(--green-bg);border-color:var(--green-light)}
+.check-box{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.check-box.ticked{background:var(--green);border-color:var(--green)}
+.check-label{font-size:13px;font-weight:500;color:var(--text)}
+
+/* ── TOAST ── */
+.toast{display:none;position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--text);color:white;padding:9px 20px;border-radius:100px;font-size:12px;font-weight:600;white-space:nowrap;z-index:600;letter-spacing:-.1px}
+.toast.show{display:block}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:flex-end}
+.modal-bg.open{display:flex}
+.modal-box{background:var(--card);border-radius:var(--r) var(--r) 0 0;padding:20px;width:100%;max-height:88vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+.modal-img{width:100%;border-radius:var(--r-sm);margin-bottom:14px;max-height:55vh;object-fit:contain}
+.modal-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.modal-meta{font-size:12px;color:var(--text3);margin-bottom:16px;font-weight:500}
+.btn-close{width:100%;padding:13px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--text);cursor:pointer;font-size:14px;font-weight:600;font-family:inherit}
+
+/* ── NAV ── */
+.nav{display:flex;background:var(--card);border-top:1px solid var(--border);padding:10px 0 env(safe-area-inset-bottom,10px);position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:30}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0}
+.nav-tab-icon{font-size:21px}
+.nav-tab-label{font-size:9px;color:var(--text3);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.nav-tab.active .nav-tab-label{color:var(--green)}
+.nav-tab.active .nav-tab-icon{transform:scale(1.08)}
+
+/* ── HISTORIQUE ── */
+.hist-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.hist-row:last-child{border-bottom:none}
+.hist-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.hist-info{flex:1}
+.hist-name{font-size:13px;font-weight:600;color:var(--text)}
+.hist-meta{font-size:11px;color:var(--text3);margin-top:2px;font-weight:500}
+
+/* ── EXPORT ── */
+.export-row{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:8px;cursor:pointer;font-family:inherit}
+.export-row:active{background:var(--green-bg)}
+.export-label{font-size:14px;font-weight:600;flex:1;text-align:left;color:var(--text)}
+
+/* ── SETTINGS ── */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border-bottom:none}
+.setting-name{font-size:14px;font-weight:500;color:var(--text)}
+.setting-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.toggle{width:46px;height:27px;border-radius:100px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--green)}.toggle.off{background:var(--border2)}
+.toggle-thumb{width:21px;height:21px;background:white;border-radius:50%;position:absolute;top:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle.on .toggle-thumb{left:22px}.toggle.off .toggle-thumb{left:3px}
+
+/* ── REFROID RESULT ── */
+.result-box{padding:13px;border-radius:var(--r-sm);margin-top:10px}
+.result-ok{background:var(--green-bg);border:1px solid var(--green-light)}
+.result-nok{background:var(--red-bg);border:1px solid var(--red-light)}
+.result-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.result-detail{font-size:12px;color:var(--text2);font-weight:500}
+</style>
+</head>
+<body>
+
+<!-- ══ PIN SCREEN ══ -->
+<div id="pin-screen">
+  <div class="pin-brand">Food Truck · HACCP</div>
+  <div class="pin-logo">Holy<span>Délice</span></div>
+  <div class="pin-tag">Tableau de bord sanitaire</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-grid">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key" style="color:var(--text3)" onclick="pinClear()">⌫</button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key" style="color:var(--text3)" onclick="pinReset()">✕</button>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-hint">Code par défaut : 1234</div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app" style="display:none">
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="logo">Holy<span>Délice</span></div>
+        <div class="logo-sub">Tableau HACCP</div>
+      </div>
+      <button class="lock-btn" onclick="lockApp()">🔒 Verrouiller</button>
+    </div>
+    <div class="status-pills">
+      <span class="pill pill-green" id="s-f1">Frigo 1 · 3.0°C ✓</span>
+      <span class="pill pill-green" id="s-f2">Frigo 2 · 2.0°C ✓</span>
+      <span class="pill pill-amber">Hotte · nov. 2026</span>
+      <span class="pill pill-red">RC Pro · 12j ⚠</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ─── VUE ACCUEIL ─── -->
+    <div class="view active" id="view-home">
+
+      <button class="ddpp-btn" onclick="toggle('panel-ddpp')">
+        🔎 &nbsp;Mode Contrôle DDPP
+      </button>
+      <div class="panel" id="panel-ddpp">
+        <div class="panel-header"><span class="panel-title">Récapitulatif inspection</span></div>
+        <div class="alert-banner"><span>⚠️</span><span class="alert-text">RC Pro expire dans 12 jours — renouveler avant contrôle</span></div>
+        <div class="data-row"><div><div class="data-name">Déclaration d'activité</div><div class="data-sub">Cerfa 13984 — Valide</div></div><span class="badge badge-green">Conforme</span></div>
+        <div class="data-row"><div><div class="data-name">Attestation HACCP</div><div class="data-sub">Marie Dupont — 14/03/2024</div></div><span class="badge badge-green">Conforme</span></div>
+        <div class="data-row"><div><div class="data-name">Relevés températures</div><div class="data-sub">7 derniers jours complets</div></div><span class="badge badge-green" id="ddpp-temp">Conforme</span></div>
+        <div class="data-row"><div><div class="data-name">Traçabilité</div><div class="data-sub">Bons de livraison 6 mois</div></div><span class="badge badge-green" id="ddpp-trace">Conforme</span></div>
+        <div class="data-row"><div><div class="data-name">RC Professionnelle</div><div class="data-sub">Expire 16/05/2026</div></div><span class="badge badge-red">Urgent</span></div>
+        <button onclick="showToast('Export PDF complet disponible en version finale')" style="width:100%;margin-top:14px;padding:13px;background:var(--text);border:none;border-radius:var(--r-sm);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">⬇ &nbsp;Exporter PDF complet</button>
+      </div>
+
+      <div class="section-label">Relevé rapide</div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span class="card-title" style="margin-bottom:0">🌡 Températures frigos</span>
+          <span style="font-size:11px;color:var(--text3);font-weight:600" id="today-date"></span>
+        </div>
+        <div class="frigo-grid">
+          <div class="frigo-card">
+            <div class="frigo-label">Frigo 1</div>
+            <div class="frigo-val c-green" id="fv1">3.0°C</div>
+            <div class="frigo-status c-green" id="fs1">✓ Conforme</div>
+          </div>
+          <div class="frigo-card">
+            <div class="frigo-label">Frigo 2</div>
+            <div class="frigo-val c-green" id="fv2">2.0°C</div>
+            <div class="frigo-status c-green" id="fs2">✓ Conforme</div>
+          </div>
+        </div>
+        <div class="input-row">
+          <input class="inp" type="number" id="ti1" placeholder="Frigo 1 °C" step="0.1">
+          <input class="inp" type="number" id="ti2" placeholder="Frigo 2 °C" step="0.1">
+          <button class="btn-sm" onclick="saveTemps()">Valider</button>
+        </div>
+        <div class="bars-wrap">
+          <div class="bars" id="bars-home"></div>
+          <div class="bar-days" id="days-home"></div>
+        </div>
+      </div>
+
+      <div class="section-label">Sections HACCP</div>
+
+      <button class="sec-btn" onclick="toggle('panel-trace')">
+        <span class="sec-icon" style="background:#EFF6FF">📦</span>
+        <span class="sec-meta"><div class="sec-name">Traçabilité</div><div class="sec-sub" id="c-trace">0 document</div></span>
+        <span class="sec-right"><span class="status-dot dot-green"></span><span class="chevron">›</span></span>
+      </button>
+      <div class="panel" id="panel-trace">
+        <div class="panel-header"><span class="panel-title">📦 Traçabilité</span><button class="btn-sm" onclick="triggerFile('f-trace')">+ Ajouter</button></div>
+        <div class="drop-zone" onclick="triggerFile('f-trace')">
+          <div class="drop-icon">📎</div>
+          <div class="drop-text">Étiquette DLC, bon de livraison, facture</div>
+          <div class="drop-sub">Photo ou PDF</div>
+          <input type="file" id="f-trace" class="fi-hidden" accept="image/*,application/pdf" multiple onchange="handleFiles(this.files,'trace')">
+        </div>
+        <div class="doc-list" id="l-trace"><div class="doc-empty">Aucun document ajouté</div></div>
+      </div>
+
+      <button class="sec-btn" onclick="toggle('panel-admin')">
+        <span class="sec-icon" style="background:#F0FDF4">📁</span>
+        <span class="sec-meta"><div class="sec-name">Administratif & Formation</div><div class="sec-sub" id="c-admin">0 document</div></span>
+        <span class="sec-right"><span class="status-dot dot-amber"></span><span class="chevron">›</span></span>
+      </button>
+      <div class="panel" id="panel-admin">
+        <div class="panel-header"><span class="panel-title">📁 Administratif</span><button class="btn-sm" onclick="triggerFile('f-admin')">+ Ajouter</button></div>
+        <div class="alert-banner"><span>⚠️</span><span class="alert-text">RC Pro expire dans 12 jours</span></div>
+        <div class="data-row"><div><div class="data-name">Déclaration d'activité</div><div class="data-sub">Cerfa 13984</div></div><span class="badge badge-green">OK</span></div>
+        <div class="data-row"><div><div class="data-name">Attestation HACCP</div><div class="data-sub">Marie Dupont</div></div><span class="badge badge-green">OK</span></div>
+        <div class="data-row"><div><div class="data-name">Kbis / RNE</div><div class="data-sub">Valide 2026</div></div><span class="badge badge-green">OK</span></div>
+        <div class="data-row"><div><div class="data-name">Carte d'ambulant</div><div class="data-sub">Valide 2026</div></div><span class="badge badge-green">OK</span></div>
+        <div class="data-row"><div><div class="data-name">RC Professionnelle</div><div class="data-sub">Expire 16/05/2026</div></div><span class="badge badge-red">Urgent</span></div>
+        <div style="margin-top:12px">
+          <div class="drop-zone" onclick="triggerFile('f-admin')">
+            <div class="drop-text">+ Ajouter un document (PDF ou photo)</div>
+            <input type="file" id="f-admin" class="fi-hidden" accept="image/*,application/pdf" multiple onchange="handleFiles(this.files,'admin')">
+          </div>
+          <div class="doc-list" id="l-admin"></div>
+        </div>
+      </div>
+
+      <button class="sec-btn" onclick="toggle('panel-recep')">
+        <span class="sec-icon" style="background:#F0FFF4">🌡</span>
+        <span class="sec-meta"><div class="sec-name">Relevés de Températures</div><div class="sec-sub">Réception & refroidissement</div></span>
+        <span class="sec-right"><span class="status-dot dot-green"></span><span class="chevron">›</span></span>
+      </button>
+      <div class="panel" id="panel-recep">
+        <div class="panel-header"><span class="panel-title">🌡 Réception marchandises</span></div>
+        <input class="inp-full" type="text" placeholder="Produit" id="rec-prod">
+        <input class="inp-full" type="text" placeholder="Fournisseur" id="rec-four">
+        <div class="input-row" style="margin-bottom:10px">
+          <input class="inp" type="number" placeholder="Temp. °C" id="rec-temp" step="0.1">
+          <select class="inp" id="rec-conf"><option>Conforme</option><option>Non conforme</option></select>
+        </div>
+        <button class="btn-green" onclick="saveReception()">Enregistrer la réception</button>
+        <div class="doc-list" id="l-recep" style="margin-top:10px"><div class="doc-empty">Aucune réception enregistrée</div></div>
+      </div>
+
+      <button class="sec-btn" onclick="toggle('panel-hygiene')">
+        <span class="sec-icon" style="background:#FFFBEB">🧼</span>
+        <span class="sec-meta"><div class="sec-name">Hygiène & Entretien</div><div class="sec-sub" id="c-hygiene">Plan de nettoyage</div></span>
+        <span class="sec-right"><span class="status-dot dot-green"></span><span class="chevron">›</span></span>
+      </button>
+      <div class="panel" id="panel-hygiene">
+        <div class="panel-header"><span class="panel-title">🧼 Plan de nettoyage — Mai 2026</span><button class="btn-sm" onclick="triggerFile('f-hygiene')">+ FDS</button></div>
+        <div id="clean-list"></div>
+        <div style="margin-top:12px">
+          <div class="drop-zone" onclick="triggerFile('f-hygiene')">
+            <div class="drop-text">+ Fiche de données sécurité (PDF)</div>
+            <input type="file" id="f-hygiene" class="fi-hidden" accept="image/*,application/pdf" multiple onchange="handleFiles(this.files,'hygiene')">
+          </div>
+          <div class="doc-list" id="l-hygiene"></div>
+        </div>
+      </div>
+
+      <button class="sec-btn" onclick="toggle('panel-perso')">
+        <span class="sec-icon" style="background:#FFF0F6">👨‍🍳</span>
+        <span class="sec-meta"><div class="sec-name">Personnel & Santé</div><div class="sec-sub" id="c-perso">0 document</div></span>
+        <span class="sec-right"><span class="status-dot dot-green"></span><span class="chevron">›</span></span>
+      </button>
+      <div class="panel" id="panel-perso">
+        <div class="panel-header"><span class="panel-title">👨‍🍳 Personnel & Santé</span><button class="btn-sm" onclick="triggerFile('f-perso')">+ Ajouter</button></div>
+        <div class="data-row"><div><div class="data-name">Protocole d'hygiène</div><div class="data-sub">Lu et validé — 01/05/2026</div></div><span class="badge badge-green">Signé</span></div>
+        <div class="data-row"><div><div class="data-name">Certificat médical</div><div class="data-sub">Valide jusqu'en déc. 2026</div></div><span class="badge badge-green">OK</span></div>
+        <div style="margin-top:12px">
+          <div class="drop-zone" onclick="triggerFile('f-perso')">
+            <div class="drop-text">+ Document personnel (PDF ou photo)</div>
+            <input type="file" id="f-perso" class="fi-hidden" accept="image/*,application/pdf" multiple onchange="handleFiles(this.files,'perso')">
+          </div>
+          <div class="doc-list" id="l-perso"></div>
+        </div>
+      </div>
+
+      <button class="sec-btn" onclick="toggle('panel-maint')">
+        <span class="sec-icon" style="background:#F5F3FF">🔧</span>
+        <span class="sec-meta"><div class="sec-name">Maintenance & Sécurité</div><div class="sec-sub" id="c-maint">0 document</div></span>
+        <span class="sec-right"><span class="status-dot dot-amber"></span><span class="chevron">›</span></span>
+      </button>
+      <div class="panel" id="panel-maint">
+        <div class="panel-header"><span class="panel-title">🔧 Maintenance & Sécurité</span><button class="btn-sm" onclick="triggerFile('f-maint')">+ Ajouter</button></div>
+        <div class="alert-banner"><span>⚠️</span><span class="alert-text">Entretien hotte prévu nov. 2026</span></div>
+        <div class="data-row"><div><div class="data-name">Attestation gaz</div><div class="data-sub">Valide déc. 2026</div></div><span class="badge badge-green">OK</span></div>
+        <div class="data-row"><div><div class="data-name">Attestation électricité</div><div class="data-sub">Valide mars 2027</div></div><span class="badge badge-green">OK</span></div>
+        <div style="margin-top:12px">
+          <div class="drop-zone" onclick="triggerFile('f-maint')">
+            <div class="drop-text">+ Attestation, contrat nuisibles...</div>
+            <input type="file" id="f-maint" class="fi-hidden" accept="image/*,application/pdf" multiple onchange="handleFiles(this.files,'maint')">
+          </div>
+          <div class="doc-list" id="l-maint"></div>
+        </div>
+      </div>
+
+      <button class="sec-btn" onclick="toggle('panel-dechets')">
+        <span class="sec-icon" style="background:#F0FDF4">♻️</span>
+        <span class="sec-meta"><div class="sec-name">Gestion des Déchets</div><div class="sec-sub" id="c-dechets">0 document</div></span>
+        <span class="sec-right"><span class="status-dot dot-green"></span><span class="chevron">›</span></span>
+      </button>
+      <div class="panel" id="panel-dechets">
+        <div class="panel-header"><span class="panel-title">♻️ Huiles usagées (HAU)</span><button class="btn-sm" onclick="triggerFile('f-dechets')">+ Ajouter</button></div>
+        <div class="data-row"><div><div class="data-name">Bon enlèvement HAU</div><div class="data-sub">14/04/2026 — Véolia</div></div><span class="badge badge-green">OK</span></div>
+        <div class="data-row"><div><div class="data-name">Bon enlèvement HAU</div><div class="data-sub">15/02/2026 — Véolia</div></div><span class="badge badge-green">OK</span></div>
+        <div style="margin-top:12px">
+          <div class="drop-zone" onclick="triggerFile('f-dechets')">
+            <div class="drop-text">+ Bon d'enlèvement HAU</div>
+            <input type="file" id="f-dechets" class="fi-hidden" accept="image/*,application/pdf" multiple onchange="handleFiles(this.files,'dechets')">
+          </div>
+          <div class="doc-list" id="l-dechets"></div>
+        </div>
+      </div>
+
+      <div style="height:8px"></div>
+    </div>
+
+    <!-- ─── VUE TEMPÉRATURES ─── -->
+    <div class="view" id="view-temp">
+      <div class="page-title">🌡 Températures</div>
+      <div class="card">
+        <div class="card-title">Relevé du jour</div>
+        <div class="frigo-grid">
+          <div class="frigo-card"><div class="frigo-label">Frigo 1</div><div class="frigo-val c-green" id="tv-f1">3.0°C</div><div class="frigo-status c-green" id="tv-s1">✓ Conforme</div></div>
+          <div class="frigo-card"><div class="frigo-label">Frigo 2</div><div class="frigo-val c-green" id="tv-f2">2.0°C</div><div class="frigo-status c-green" id="tv-s2">✓ Conforme</div></div>
+        </div>
+        <div class="input-row"><input class="inp" type="number" id="tv-in1" placeholder="Frigo 1 °C" step="0.1"><input class="inp" type="number" id="tv-in2" placeholder="Frigo 2 °C" step="0.1"></div>
+        <button class="btn-green" onclick="saveTempsFull()">Enregistrer</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Graphique 7 jours</div>
+        <div class="bars" id="bars-temp" style="height:70px"></div>
+        <div class="bar-days" id="days-temp"></div>
+        <div style="display:flex;gap:14px;margin-top:8px">
+          <span style="font-size:11px;color:var(--green);font-weight:600">■ Conforme (0–4°C)</span>
+          <span style="font-size:11px;color:var(--red);font-weight:600">■ Non conforme</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Refroidissement rapide</div>
+        <div style="font-size:12px;color:var(--text3);font-weight:500;margin-bottom:12px">Règle HACCP : 63°C → 10°C en moins de 2h</div>
+        <input class="inp-full" type="text" placeholder="Produit" id="rf-prod">
+        <div class="input-row"><input class="inp" type="time" id="rf-start"><input class="inp" type="time" id="rf-end"></div>
+        <div class="input-row" style="margin-bottom:10px"><input class="inp" type="number" placeholder="Temp. début °C" id="rf-t1" step="0.1"><input class="inp" type="number" placeholder="Temp. fin °C" id="rf-t2" step="0.1"></div>
+        <button class="btn-green" onclick="calcRefroid()">Calculer la conformité</button>
+        <div id="rf-result"></div>
+      </div>
+    </div>
+
+    <!-- ─── VUE HISTORIQUE ─── -->
+    <div class="view" id="view-hist">
+      <div class="page-title">📋 Historique</div>
+      <div class="card">
+        <div class="card-title">Relevés températures</div>
+        <div id="hist-temps">
+          <div class="hist-row"><div class="hist-icon" style="background:var(--green-bg)">🌡</div><div class="hist-info"><div class="hist-name">Frigo 1 : 3.0°C / Frigo 2 : 2.0°C</div><div class="hist-meta">04/05/2026 — Conforme</div></div><span class="badge badge-green">✓</span></div>
+          <div class="hist-row"><div class="hist-icon" style="background:var(--green-bg)">🌡</div><div class="hist-info"><div class="hist-name">Frigo 1 : 3.8°C / Frigo 2 : 2.1°C</div><div class="hist-meta">03/05/2026 — Conforme</div></div><span class="badge badge-green">✓</span></div>
+          <div class="hist-row"><div class="hist-icon" style="background:var(--green-bg)">🌡</div><div class="hist-info"><div class="hist-name">Frigo 1 : 2.5°C / Frigo 2 : 1.9°C</div><div class="hist-meta">02/05/2026 — Conforme</div></div><span class="badge badge-green">✓</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Documents ajoutés</div>
+        <div id="hist-docs"><div class="doc-empty">Aucun document uploadé pour l'instant</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Réceptions marchandises</div>
+        <div id="hist-recep"><div class="doc-empty">Aucune réception enregistrée</div></div>
+      </div>
+    </div>
+
+    <!-- ─── VUE EXPORTER ─── -->
+    <div class="view" id="view-export">
+      <div class="page-title">⬇ Exporter</div>
+      <div class="card">
+        <div class="card-title">Export par section</div>
+        <button class="export-row" onclick="showToast('Export Traçabilité en préparation...')"><span style="font-size:20px">📦</span><span class="export-label">Traçabilité</span><span class="badge badge-green">PDF</span></button>
+        <button class="export-row" onclick="showToast('Export Températures en préparation...')"><span style="font-size:20px">🌡</span><span class="export-label">Températures</span><span class="badge badge-green">PDF</span></button>
+        <button class="export-row" onclick="showToast('Export Hygiène en préparation...')"><span style="font-size:20px">🧼</span><span class="export-label">Hygiène & Entretien</span><span class="badge badge-green">PDF</span></button>
+        <button class="export-row" onclick="showToast('Export Administratif en préparation...')"><span style="font-size:20px">📁</span><span class="export-label">Administratif</span><span class="badge badge-green">PDF</span></button>
+        <button class="export-row" onclick="showToast('Export Maintenance en préparation...')"><span style="font-size:20px">🔧</span><span class="export-label">Maintenance</span><span class="badge badge-green">PDF</span></button>
+        <button class="export-row" onclick="showToast('Export Déchets en préparation...')"><span style="font-size:20px">♻️</span><span class="export-label">Déchets & HAU</span><span class="badge badge-green">PDF</span></button>
+      </div>
+      <div class="card">
+        <div class="card-title">Export global DDPP</div>
+        <div style="font-size:12px;color:var(--text3);font-weight:500;margin-bottom:12px">Toutes les sections en un seul PDF — idéal pour contrôle sanitaire</div>
+        <button onclick="showToast('Génération PDF global DDPP...')" style="width:100%;padding:14px;background:var(--text);border:none;border-radius:var(--r-sm);color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:-.2px">🔎 &nbsp;Export complet DDPP</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Stockage local</div>
+        <div style="font-size:12px;color:var(--text3);font-weight:500" id="storage-info">Calcul en cours...</div>
+        <div style="background:var(--bg);border-radius:100px;height:5px;margin-top:8px;overflow:hidden"><div id="storage-bar" style="height:5px;background:var(--green);border-radius:100px;width:0%;transition:width .4s"></div></div>
+        <button onclick="clearAllData()" style="margin-top:14px;padding:10px 16px;border:1px solid var(--red-light);border-radius:var(--r-xs);background:var(--red-bg);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">🗑 Effacer toutes les données</button>
+      </div>
+    </div>
+
+    <!-- ─── VUE RÉGLAGES ─── -->
+    <div class="view" id="view-settings">
+      <div class="page-title">⚙ Réglages</div>
+      <div class="card">
+        <div class="card-title">Établissement</div>
+        <div class="setting-row"><div><div class="setting-name">Nom du food truck</div><div class="setting-sub">HolyDélice</div></div></div>
+        <div class="setting-row"><div><div class="setting-name">Responsable HACCP</div><div class="setting-sub">Marie Dupont</div></div></div>
+        <div class="setting-row"><div><div class="setting-name">N° SIRET</div><div class="setting-sub">123 456 789 00012</div></div></div>
+        <div class="setting-row"><div><div class="setting-name">Plage conforme frigos</div><div class="setting-sub">0°C à +4°C (réglementaire)</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Notifications</div>
+        <div class="setting-row"><div><div class="setting-name">Alertes expiration documents</div></div><div class="toggle on" id="tog-1" onclick="toggleSwitch('tog-1')"><div class="toggle-thumb"></div></div></div>
+        <div class="setting-row"><div><div class="setting-name">Rappel relevé matin / soir</div></div><div class="toggle on" id="tog-2" onclick="toggleSwitch('tog-2')"><div class="toggle-thumb"></div></div></div>
+        <div class="setting-row"><div><div class="setting-name">Mode hors ligne</div><div class="setting-sub">Fonctionne sans connexion</div></div><div class="toggle on" id="tog-3" onclick="toggleSwitch('tog-3')"><div class="toggle-thumb"></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Sécurité</div>
+        <div class="setting-row">
+          <div><div class="setting-name">Code PIN</div><div class="setting-sub">4 chiffres — accès protégé</div></div>
+          <button onclick="changePIN()" style="padding:8px 14px;border:1px solid var(--border);border-radius:var(--r-xs);background:var(--bg);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Modifier</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">À propos</div>
+        <div class="setting-row"><div><div class="setting-name">Version</div><div class="setting-sub">HolyDélice HACCP v1.0</div></div></div>
+        <div class="setting-row"><div><div class="setting-name">Conformité</div><div class="setting-sub">DDPP · Règlement CE 852/2004</div></div></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-tab active" id="nav-home" onclick="goTo('home')"><div class="nav-tab-icon">🏠</div><div class="nav-tab-label">Accueil</div></div>
+    <div class="nav-tab" id="nav-temp" onclick="goTo('temp')"><div class="nav-tab-icon">🌡</div><div class="nav-tab-label">Températures</div></div>
+    <div class="nav-tab" id="nav-hist" onclick="goTo('hist')"><div class="nav-tab-icon">📋</div><div class="nav-tab-label">Historique</div></div>
+    <div class="nav-tab" id="nav-export" onclick="goTo('export')"><div class="nav-tab-icon">⬇</div><div class="nav-tab-label">Exporter</div></div>
+    <div class="nav-tab" id="nav-settings" onclick="goTo('settings')"><div class="nav-tab-icon">⚙</div><div class="nav-tab-label">Réglages</div></div>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div id="modal-content"></div>
+    <button class="btn-close" onclick="closeModal()">Fermer</button>
+  </div>
+</div>
+
+<script>
+// ── STORAGE ──
+const STORE_KEY='holydélice_v1';
+let db={
+  pin:'1234',
+  temps:[
+    {f1:3.1,f2:2.8,date:'28/04/2026',ok:true},{f1:2.8,f2:2.5,date:'29/04/2026',ok:true},
+    {f1:3.4,f2:3.0,date:'30/04/2026',ok:true},{f1:4.0,f2:3.2,date:'01/05/2026',ok:true},
+    {f1:2.5,f2:1.9,date:'02/05/2026',ok:true},{f1:3.8,f2:2.1,date:'03/05/2026',ok:true},
+    {f1:3.0,f2:2.0,date:'04/05/2026',ok:true}
+  ],
+  docs:{trace:[],admin:[],hygiene:[],perso:[],maint:[],dechets:[]},
+  receptions:[],
+  histDocs:[],
+  cleanState:[true,true,true,false,true,false,false]
+};
+
+function saveDB(){try{localStorage.setItem(STORE_KEY,JSON.stringify(db));}catch(e){showToast('⚠ Stockage plein — supprimez des fichiers');}}
+function loadDB(){try{const d=localStorage.getItem(STORE_KEY);if(d)db=JSON.parse(d);}catch(e){}}
+
+// ── PIN ──
+let pinEntry='';
+const CORRECT_PIN=()=>db.pin;
+
+function pinKey(k){
+  if(pinEntry.length>=4)return;
+  pinEntry+=k;
+  updateDots();
+  if(pinEntry.length===4){
+    setTimeout(()=>{
+      if(pinEntry===CORRECT_PIN()){unlockApp();}
+      else{document.getElementById('pin-error').textContent='Code incorrect — réessayez';pinEntry='';updateDots();}
+    },150);
+  }
+}
+function pinClear(){if(pinEntry.length>0){pinEntry=pinEntry.slice(0,-1);updateDots();document.getElementById('pin-error').textContent='';}}
+function pinReset(){pinEntry='';updateDots();document.getElementById('pin-error').textContent='';}
+function updateDots(){for(let i=0;i<4;i++){document.getElementById('pd'+i).classList.toggle('filled',i<pinEntry.length);}}
+function unlockApp(){document.getElementById('pin-screen').style.display='none';document.getElementById('app').style.display='block';initApp();}
+function lockApp(){document.getElementById('pin-screen').style.display='flex';document.getElementById('app').style.display='none';pinEntry='';updateDots();}
+function changePIN(){const n=prompt('Nouveau code PIN (4 chiffres) :');if(n&&/^\d{4}$/.test(n)){db.pin=n;saveDB();showToast('✓ Code PIN modifié');}}
+
+// ── NAV ──
+function goTo(page){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('view-'+page).classList.add('active');
+  document.getElementById('nav-'+page).classList.add('active');
+  document.querySelector('.content').scrollTop=0;
+  if(page==='export')updateStorageInfo();
+}
+function toggle(id){document.getElementById(id).classList.toggle('open');}
+function triggerFile(id){document.getElementById(id).click();}
+
+// ── INIT ──
+function initApp(){
+  loadDB();
+  document.getElementById('today-date').textContent=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+  buildBars('bars-home','days-home',50);
+  buildBars('bars-temp','days-temp',70);
+  buildChecklist();
+  Object.keys(db.docs).forEach(sec=>renderList(sec));
+  renderHistDocs();
+  renderHistRecep();
+  updateStorageInfo();
+}
+
+// ── CHART BARS ──
+const DAYS_LABELS=['L','M','M','J','V','S','D'];
+function buildBars(barsId,daysId,maxH){
+  const bEl=document.getElementById(barsId);
+  const dEl=document.getElementById(daysId);
+  if(!bEl||!dEl)return;
+  bEl.innerHTML='';dEl.innerHTML='';
+  db.temps.slice(-7).forEach((t,i)=>{
+    const val=t.f1;
+    const h=Math.round((Math.min(val,6)/6)*maxH);
+    const ok=val>=0&&val<=4;
+    bEl.innerHTML+=`<div class="bar ${ok?'bar-green':'bar-red'}" style="height:${h}px" title="${val}°C"></div>`;
+    dEl.innerHTML+=`<div class="bar-day">${DAYS_LABELS[i]}</div>`;
+  });
+}
+
+// ── CHECKLIST ──
+const CLEAN_ITEMS=['Plan de travail — Quotidien','Friteuse — Quotidien','Plancha — Quotidien','Sol food truck — Quotidien','Poignées & surfaces — Quotidien','Hotte — Hebdomadaire','Réfrigérateurs — Hebdomadaire'];
+function buildChecklist(){
+  const el=document.getElementById('clean-list');
+  el.innerHTML='';
+  CLEAN_ITEMS.forEach((item,i)=>{
+    const done=db.cleanState[i];
+    const div=document.createElement('div');
+    div.className='check-item'+(done?' done':'');
+    div.innerHTML=`<div class="check-box${done?' ticked':''}">${done?'<svg width="12" height="9" viewBox="0 0 12 9"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>':''}</div><span class="check-label">${item}</span>`;
+    div.onclick=()=>{
+      db.cleanState[i]=!db.cleanState[i];
+      saveDB();buildChecklist();
+    };
+    el.appendChild(div);
+  });
+}
+
+// ── TEMPÉRATURES ──
+function applyTemp(val,fvId,fsId,sId,num){
+  if(isNaN(val))return;
+  const ok=val>=0&&val<=4;
+  const cls=ok?'c-green':'c-red';
+  const txt=ok?'✓ Conforme':'✗ Non conforme';
+  [fvId,fsId].forEach(id=>{if(document.getElementById(id)){document.getElementById(id).className=id.startsWith('f')?'frigo-val '+cls:'frigo-status '+cls;}});
+  if(document.getElementById(fvId))document.getElementById(fvId).textContent=val.toFixed(1)+'°C';
+  if(document.getElementById(fsId))document.getElementById(fsId).textContent=txt;
+  const s=document.getElementById(sId);
+  if(s){s.textContent='Frigo '+num+' · '+val.toFixed(1)+'°C '+(ok?'✓':'✗');s.className='pill '+(ok?'pill-green':'pill-red');}
+}
+
+function saveTemps(){
+  const v1=parseFloat(document.getElementById('ti1').value);
+  const v2=parseFloat(document.getElementById('ti2').value);
+  if(isNaN(v1)&&isNaN(v2)){showToast('Entrez au moins une température');return;}
+  applyTemp(v1,'fv1','fs1','s-f1',1);
+  applyTemp(v2,'fv2','fs2','s-f2',2);
+  if(!isNaN(v1)&&!isNaN(v2)){
+    const ok=(v1>=0&&v1<=4)&&(v2>=0&&v2<=4);
+    const entry={f1:v1,f2:v2,date:new Date().toLocaleDateString('fr-FR'),ok};
+    db.temps.push(entry);
+    if(db.temps.length>30)db.temps=db.temps.slice(-30);
+    saveDB();
+    buildBars('bars-home','days-home',50);
+    addHistTemp(entry);
+  }
+  document.getElementById('ti1').value='';
+  document.getElementById('ti2').value='';
+  showToast('✓ Températures enregistrées');
+}
+
+function saveTempsFull(){
+  const v1=parseFloat(document.getElementById('tv-in1').value);
+  const v2=parseFloat(document.getElementById('tv-in2').value);
+  if(isNaN(v1)&&isNaN(v2)){showToast('Entrez au moins une température');return;}
+  applyTemp(v1,'fv1','fs1','s-f1',1);applyTemp(v2,'fv2','fs2','s-f2',2);
+  applyTemp(v1,'tv-f1','tv-s1',null,1);applyTemp(v2,'tv-f2','tv-s2',null,2);
+  if(!isNaN(v1)&&!isNaN(v2)){
+    const ok=(v1>=0&&v1<=4)&&(v2>=0&&v2<=4);
+    const entry={f1:v1,f2:v2,date:new Date().toLocaleDateString('fr-FR'),ok};
+    db.temps.push(entry);saveDB();
+    buildBars('bars-home','days-home',50);buildBars('bars-temp','days-temp',70);
+    addHistTemp(entry);
+  }
+  document.getElementById('tv-in1').value='';document.getElementById('tv-in2').value='';
+  showToast('✓ Températures enregistrées');
+}
+
+function addHistTemp(entry){
+  const el=document.getElementById('hist-temps');
+  const ok=entry.ok;
+  const div=document.createElement('div');
+  div.className='hist-row';
+  div.innerHTML=`<div class="hist-icon" style="background:${ok?'var(--green-bg)':'var(--red-bg)'}">🌡</div><div class="hist-info"><div class="hist-name">Frigo 1 : ${entry.f1.toFixed(1)}°C / Frigo 2 : ${entry.f2.toFixed(1)}°C</div><div class="hist-meta">${entry.date} — ${ok?'Conforme':'Non conforme'}</div></div><span class="badge ${ok?'badge-green':'badge-red'}">${ok?'✓':'✗'}</span>`;
+  el.insertBefore(div,el.firstChild);
+}
+
+// ── RÉCEPTION ──
+function saveReception(){
+  const prod=document.getElementById('rec-prod').value.trim();
+  const four=document.getElementById('rec-four').value.trim();
+  const temp=parseFloat(document.getElementById('rec-temp').value);
+  const conf=document.getElementById('rec-conf').value;
+  if(!prod||isNaN(temp)){showToast('Remplissez le produit et la température');return;}
+  const ok=conf==='Conforme';
+  const entry={prod,four,temp,conf,ok,date:new Date().toLocaleDateString('fr-FR')};
+  db.receptions.unshift(entry);saveDB();
+
+  const el=document.getElementById('l-recep');
+  const old=el.querySelector('.doc-empty');if(old)old.remove();
+  const div=document.createElement('div');div.className='doc-item';
+  div.innerHTML=`<div class="doc-thumb-file" style="background:${ok?'var(--green-bg)':'var(--red-bg)'}">${ok?'✓':'✗'}</div><div class="doc-info"><div class="doc-name">${prod}${four?' — '+four:''}</div><div class="doc-meta">${entry.date} · ${temp.toFixed(1)}°C · <span style="color:${ok?'var(--green)':'var(--red)'};font-weight:600}">${conf}</span></div></div>`;
+  el.insertBefore(div,el.firstChild);
+  renderHistRecep();
+  document.getElementById('rec-prod').value='';document.getElementById('rec-four').value='';document.getElementById('rec-temp').value='';
+  showToast('✓ Réception enregistrée');
+}
+
+function renderHistRecep(){
+  const el=document.getElementById('hist-recep');
+  if(!el)return;
+  if(!db.receptions.length){el.innerHTML='<div class="doc-empty">Aucune réception enregistrée</div>';return;}
+  el.innerHTML='';
+  db.receptions.slice(0,10).forEach(r=>{
+    el.innerHTML+=`<div class="hist-row"><div class="hist-icon" style="background:${r.ok?'var(--green-bg)':'var(--red-bg)'}">${r.ok?'✓':'✗'}</div><div class="hist-info"><div class="hist-name">${r.prod}${r.four?' — '+r.four:''}</div><div class="hist-meta">${r.date} · ${r.temp.toFixed(1)}°C · ${r.conf}</div></div><span class="badge ${r.ok?'badge-green':'badge-red'}">${r.ok?'✓':'✗'}</span></div>`;
+  });
+}
+
+// ── REFROIDISSEMENT ──
+function calcRefroid(){
+  const prod=document.getElementById('rf-prod').value;
+  const start=document.getElementById('rf-start').value;
+  const end=document.getElementById('rf-end').value;
+  const t1=parseFloat(document.getElementById('rf-t1').value);
+  const t2=parseFloat(document.getElementById('rf-t2').value);
+  if(!start||!end||isNaN(t1)||isNaN(t2)){showToast('Remplissez tous les champs');return;}
+  const [sh,sm]=start.split(':').map(Number);
+  const [eh,em]=end.split(':').map(Number);
+  const durMin=(eh*60+em)-(sh*60+sm);
+  const durH=(durMin/60).toFixed(1);
+  const ok=durMin<=120&&t2<=10;
+  const el=document.getElementById('rf-result');
+  el.innerHTML=`<div class="result-box ${ok?'result-ok':'result-nok'}"><div class="result-title" style="color:${ok?'var(--green)':'var(--red)'}">${ok?'✓ Conforme':'✗ Non conforme'}</div><div class="result-detail">${prod?prod+' · ':''} ${t1.toFixed(0)}°C → ${t2.toFixed(0)}°C en ${durH}h (${durMin} min)${!ok?' · Dépassement du délai réglementaire':''}</div></div>`;
+  showToast(ok?'✓ Refroidissement conforme':'⚠ Non conforme — action requise');
+}
+
+// ── UPLOAD FICHIERS ──
+function handleFiles(files,sec){
+  Array.from(files).forEach(file=>{
+    if(file.size>3*1024*1024){showToast('⚠ Fichier trop lourd — max 3 Mo');return;}
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const doc={id:Date.now()+Math.random(),name:file.name,type:file.type,size:file.size,date:new Date().toLocaleDateString('fr-FR'),data:e.target.result,sec};
+      db.docs[sec].push(doc);
+      db.histDocs.unshift({...doc,data:null});
+      saveDB();
+      renderList(sec);
+      renderHistDocs();
+      showToast('✓ '+file.name+' ajouté');
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderList(sec){
+  const el=document.getElementById('l-'+sec);
+  if(!el)return;
+  const docs=db.docs[sec];
+  const cEl=document.getElementById('c-'+sec);
+  if(cEl)cEl.textContent=docs.length+' document'+(docs.length!==1?'s':'');
+  if(!docs.length){el.innerHTML='<div class="doc-empty">Aucun document ajouté</div>';return;}
+  el.innerHTML='';
+  docs.slice().reverse().forEach(doc=>{
+    const isImg=doc.type&&doc.type.startsWith('image/');
+    const thumb=isImg?`<img src="${doc.data}" class="doc-thumb">`:`<div class="doc-thumb-pdf">📄</div>`;
+    const div=document.createElement('div');div.className='doc-item';
+    div.innerHTML=`${thumb}<div class="doc-info"><div class="doc-name">${doc.name}</div><div class="doc-meta">${doc.date} · ${Math.round(doc.size/1024)} Ko</div></div><div class="doc-actions"><button class="btn-view" onclick="previewDoc('${doc.id}','${sec}')">Voir</button><button class="btn-del" onclick="delDoc('${doc.id}','${sec}')">✕</button></div>`;
+    el.appendChild(div);
+  });
+}
+
+function delDoc(id,sec){
+  db.docs[sec]=db.docs[sec].filter(d=>String(d.id)!==String(id));
+  saveDB();renderList(sec);showToast('Document supprimé');
+}
+
+function previewDoc(id,sec){
+  const doc=db.docs[sec].find(d=>String(d.id)===String(id));
+  if(!doc)return;
+  const c=document.getElementById('modal-content');
+  if(doc.type&&doc.type.startsWith('image/')){
+    c.innerHTML=`<img src="${doc.data}" class="modal-img"><div class="modal-name">${doc.name}</div><div class="modal-meta">${doc.date} · ${Math.round(doc.size/1024)} Ko</div>`;
+  } else {
+    c.innerHTML=`<div style="text-align:center;padding:24px 0"><div style="font-size:48px;margin-bottom:14px">📄</div><div class="modal-name">${doc.name}</div><div class="modal-meta">${doc.date} · ${Math.round(doc.size/1024)} Ko</div><a href="${doc.data}" download="${doc.name}" style="display:block;margin-top:16px;padding:12px;background:var(--green);color:white;border-radius:var(--r-sm);text-decoration:none;font-size:14px;font-weight:600">⬇ Télécharger</a></div>`;
+  }
+  document.getElementById('modal-bg').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');}
+
+function renderHistDocs(){
+  const el=document.getElementById('hist-docs');
+  if(!el)return;
+  const docs=db.histDocs.filter(d=>d.name);
+  if(!docs.length){el.innerHTML='<div class="doc-empty">Aucun document uploadé</div>';return;}
+  el.innerHTML='';
+  docs.slice(0,12).forEach(d=>{
+    const isImg=d.type&&d.type.startsWith('image/');
+    el.innerHTML+=`<div class="hist-row"><div class="hist-icon" style="background:#EEF2FF">${isImg?'🖼':'📄'}</div><div class="hist-info"><div class="hist-name">${d.name}</div><div class="hist-meta">${d.date} · ${d.sec}</div></div><span class="badge badge-green">✓</span></div>`;
+  });
+}
+
+// ── STORAGE INFO ──
+function updateStorageInfo(){
+  try{
+    const raw=JSON.stringify(db);
+    const kb=Math.round(raw.length*2/1024);
+    const mb=(kb/1024).toFixed(1);
+    const pct=Math.min(Math.round((kb/51200)*100),100);
+    document.getElementById('storage-info').textContent=`${mb} Mo utilisés sur ~50 Mo disponibles`;
+    document.getElementById('storage-bar').style.width=pct+'%';
+  }catch(e){}
+}
+
+function clearAllData(){
+  if(confirm('Effacer TOUTES les données ? Cette action est irréversible.')){
+    const pin=db.pin;
+    db={pin,temps:[],docs:{trace:[],admin:[],hygiene:[],perso:[],maint:[],dechets:[]},receptions:[],histDocs:[],cleanState:[false,false,false,false,false,false,false]};
+    saveDB();location.reload();
+  }
+}
+
+// ── SETTINGS ──
+function toggleSwitch(id){
+  const el=document.getElementById(id);
+  el.classList.toggle('on');el.classList.toggle('off');
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+<script>
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js")
+    .then(()=>console.log("SW OK"))
+    .catch(e=>console.warn("SW:",e));
+}
+</script>
+</body>
+</html>

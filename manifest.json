@@ -1,0 +1,26 @@
+{
+  "name": "HolyDélice HACCP",
+  "short_name": "HolyDélice",
+  "description": "Tableau de bord HACCP pour food truck - conforme DDPP",
+  "start_url": "/holyd-lice-haccp/",
+  "scope": "/holyd-lice-haccp/",
+  "display": "standalone",
+  "background_color": "#f7f7f5",
+  "theme_color": "#2d6a4f",
+  "orientation": "portrait",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "https://holydelice.github.io/holyd-lice-haccp/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://holydelice.github.io/holyd-lice-haccp/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
